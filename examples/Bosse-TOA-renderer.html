@@ -1,0 +1,136 @@
+<!--
+  Copyright 2017 Google Inc. All Rights Reserved.  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.  You may obtain a copy of the License at
+      http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and  limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html>
+  
+<!-- Mirrored from www.ohti.xyz/examples/Bosse-TOA-renderer.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 28 Jun 2019 11:03:12 GMT -->
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title> SOA-TOA-Renderer </title>
+    <script src="../build/omnitone.min.js"></script>
+    <link rel="stylesheet" href="example.css">
+  </head>
+  <body>
+    <h1> Example: hoaRenderer (Optimized) </h1>
+    <p> <code>hoaRenderer</code> is an optimized ambisonic renderer based on
+      the integrated convolution (SH-MaxRe HRIR).  This is to show online playback of TOA 16 channel files over Internet </p>
+    <p> See <a href="https://github.com/GoogleChrome/omnitone#hoaRenderer">more
+        info</a> on <code>hoaRenderer</code> (modified example from Omnitone). </p>
+    <div id="secSource">
+      <p> NOTE: Use headphones for the full-sphere surround sound. </p>
+      <p></p>
+      <select id="eSelectSource" name="dropdownSource" disabled="disabled">
+      
+        
+        <option value="TOA-Am" selected="selected"> 3oA America </option>
+        <option value="FA-S5" selected="selected"> Farina stereo5 </option>
+        <option value="FA-480" selected="selected"> Farina 480 </option>
+        <option value="FA-Du04" selected="selected"> Farina Duomo04 </option> 
+        <option value="TOA-16Trk" selected="selected" > 16 Trk announce </option>
+        <option value="FA-S13" selected="selected"> Farina stereo13 </option>
+      </select>
+      <button id="eButtonPlayback" disabled="disabled">Play</button> </div>
+    <div id="secRenderingMode"> <span class="label">Rendering mode</span> <button
+
+        id="eButtonBypass" disabled="disabled">Ambisonic</button> </div>
+    <div id="footer">
+      <p>
+          Media in the demo are soundtracks extracted from video files here:</p> 
+          <p>http://www.angelofarina.it/Public/Jump-Videos/Corde-Vocali/Jump-3rd-order/</p>
+          <p></p>http://www.angelofarina.it/Public/Jump-Videos/Choir-Cathedral-June2017/Jump-Inspector-TOA/
+          
+          <p>America the beautiful is recorded by Phillip Westbrook with octomic, this upsampled TOA version of a second order Ambisonic recording which is downloadable from http://www.core-sound.com/OctoMic/6.php 
+          </p>
+          
+          <p>The 16 Trk announce is a non Ambisonic file with channel numbers announced recorded by me.</p>
+          <p>Bosse Sandholm</p>
+          <a> If you cannot get the example to play any music, please restart the session at <a href="../index.html" > http://www.ohti.xyz </a>
+      <p> Found something broken? This is modified by github OHTI project <a href="https://github.com/OHTI">File
+          an issue.</a> </p>
+    </div>
+    <script>
+    var hoaRenderer;
+    var audioSources = {
+     
+      'TOA-Am': 'resources/toa-ambix-America-16ch-ogg.opus',
+      'FA-S5': 'resources/Stereo05-3oA-opus.opus',
+      'FA-480': 'resources/480-3oA-opus.opus',
+      'FA-S13': 'resources/Stereo13-3oA-opus.opus',
+      'FA-Du04': 'resources/Duomo04-3oA-opus.opus',
+      'TOA-16Trk': 'resources/Opus-Ogg-16trk-VBR-4048.opus'
+     
+    };
+
+    var buttonPlayback, selectSource, buttonBypass;
+
+    var onLoad = function () {
+      var audioContext = new AudioContext();
+      var audioElement = document.createElement('audio');
+      var audioElementSource =
+          audioContext.createMediaElementSource(audioElement);
+      audioElement.loop = true;
+      audioElement.crossOrigin = 'anonymous';
+      audioElement.src = audioSources['FA-S13'];
+
+      hoaRenderer = Omnitone.createHOARenderer(audioContext, {
+        // The example audio is in the Ambix ordering (W,X,Y,Z). So do NOT remap the
+        // channels to the ACN format.
+        // channelMap: [0, 1, 2, 3 ]
+      });
+
+      selectSource = document.getElementById('eSelectSource');
+      buttonPlayback = document.getElementById('eButtonPlayback');
+      buttonBypass = document.getElementById('eButtonBypass');
+
+      selectSource.onchange = function (event) {
+        audioElement.src = audioSources[event.target.value];
+        audioElement.load();
+        if (buttonPlayback.textContent === 'Pause')
+          audioElement.play();
+      };
+
+      buttonPlayback.onclick = function (event) {
+        if (event.target.textContent === 'Play') {
+          event.target.textContent = 'Pause';
+          audioElement.play();
+        } else {
+          event.target.textContent = 'Play';
+          audioElement.pause();
+        }
+      };
+
+      buttonBypass.onclick = function (event) {
+        if (event.target.textContent === 'Ambisonic') {
+          event.target.textContent = 'Bypass';
+          hoaRenderer.setRenderingMode('bypass');
+        } else {
+          event.target.textContent = 'Ambisonic';
+          hoaRenderer.setRenderingMode('ambisonic');
+        }
+      };
+
+      hoaRenderer.initialize().then(function () {
+        selectSource.disabled = false;
+        buttonPlayback.disabled = false;
+        buttonBypass.disabled = false;
+        audioElementSource.connect(hoaRenderer.input);
+        hoaRenderer.output.connect(audioContext.destination);
+      }, function (onInitializationError) {
+        console.error(onInitializationError);
+      });
+    };
+
+    window.addEventListener('load', onLoad);
+    </script>
+    
+  </body>
+
+<!-- Mirrored from www.ohti.xyz/examples/Bosse-TOA-renderer.html by HTTrack Website Copier/3.x [XR&CO'2014], Fri, 28 Jun 2019 11:03:13 GMT -->
+</html>
